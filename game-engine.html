@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameForge 2D - Visual Game Engine</title>
+    <style>
+        /* ===== CSS Variables & Reset ===== */
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-panel: #16213e;
+            --bg-lighter: #1f3460;
+            --bg-input: #0f0f1a;
+            --accent: #e94560;
+            --accent-hover:  #ff6b6b;
+            --accent-secondary: #0f3460;
+            --text-primary: #eaeaea;
+            --text-secondary: #a0a0a0;
+            --border-color: #2a2a4a;
+            --success: #4ecca3;
+            --warning: #ffc107;
+            --danger:  #e94560;
+            --node-event: #4ecca3;
+            --node-action: #e94560;
+            --node-flow: #ffc107;
+            --node-math: #7b68ee;
+            --node-comparison: #ff9800;
+            --node-variable: #00bcd4;
+            --grid-color: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background:  var(--bg-dark);
+            color: var(--text-primary);
+            overflow: hidden;
+            height: 100vh;
+            user-select: none;
+        }
+
+        /* ===== App Layout ===== */
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        /* ===== Toolbar ===== */
+        #toolbar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 8px 16px;
+            background: var(--bg-panel);
+            border-bottom: 2px solid var(--border-color);
+            flex-shrink:  0;
+            flex-wrap: wrap;
+        }
+
+        .toolbar-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight:  bold;
+            color: var(--accent);
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 6px 12px;
+            background: var(--bg-lighter);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius:  4px;
+            cursor:  pointer;
+            font-size:  13px;
+            transition:  all 0.2s;
+        }
+
+        button:hover {
+            background: var(--accent-secondary);
+            border-color:  var(--accent);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        button. active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .play-btn: hover {
+            background: var(--success) !important;
+            color: #000 !important;
+        }
+
+        .stop-btn:hover:not(:disabled) {
+            background: var(--danger) !important;
+        }
+
+        /* ===== Main Content ===== */
+        #main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* ===== Panels ===== */
+        . panel {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+        }
+
+        .panel-header {
+            padding: 10px 15px;
+            background: var(--bg-lighter);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        /* Left Panel - Palette */
+        #left-panel {
+            width: 220px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            background: var(--bg-panel);
+        }
+
+        #palette-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .palette-tab {
+            flex: 1;
+            padding:  8px;
+            background: var(--bg-dark);
+            border:  none;
+            border-radius: 0;
+            font-size: 12px;
+        }
+
+        .palette-tab. active {
+            background: var(--bg-lighter);
+        }
+
+        #palette-content {
+            flex:  1;
+            overflow-y: auto;
+            padding:  10px;
+        }
+
+        .palette-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: var(--bg-dark);
+            border:  1px solid var(--border-color);
+            border-radius: 6px;
+            cursor: grab;
+            transition: all 0.2s;
+        }
+
+        .palette-item:hover {
+            border-color: var(--accent);
+            transform: translateX(3px);
+        }
+
+        . palette-item: active {
+            cursor: grabbing;
+        }
+
+        .palette-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border-radius: 4px;
+        }
+
+        .palette-info {
+            flex: 1;
+        }
+
+        .palette-info h4 {
+            font-size: 13px;
+            margin-bottom:  2px;
+        }
+
+        . palette-info span {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* Center Panel - Canvas */
+        #center-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: var(--bg-dark);
+        }
+
+        . editor-view {
+            display: none;
+            flex:  1;
+            position: relative;
+        }
+
+        .editor-view. active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #canvas-container {
+            flex:  1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        #game-canvas {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid var(--border-color);
+            background:  #0a0a15;
+        }
+
+        #canvas-controls {
+            position: absolute;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            padding: 8px 15px;
+            background: rgba(22, 33, 62, 0.9);
+            border-radius: 25px;
+            border: 1px solid var(--border-color);
+        }
+
+        #canvas-controls button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        #zoom-level {
+            min-width: 50px;
+            text-align: center;
+            line-height: 28px;
+        }
+
+        /* Node Editor */
+        #node-editor-container {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background: 
+                linear-gradient(var(--grid-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
+            background-size:  20px 20px;
+        }
+
+        #node-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        #node-toolbar {
+            padding: 10px 15px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        #node-toolbar select {
+            padding: 6px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 4px;
+            min-width: 150px;
+        }
+
+        #node-info {
+            padding: 8px 15px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-color);
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        /* Right Panel - Inspector */
+        #right-panel {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid var(--border-color);
+            background: var(--bg-panel);
+        }
+
+        #inspector {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        . inspector-section {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .inspector-section h3 {
+            font-size: 13px;
+            margin-bottom:  12px;
+            color: var(--accent);
+        }
+
+        .property-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        . property-row label {
+            width: 80px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .property-row input[type="text"],
+        .property-row input[type="number"],
+        .property-row select {
+            flex: 1;
+            padding:  6px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius:  4px;
+            font-size: 12px;
+        }
+
+        .property-row input[type="color"] {
+            flex: 1;
+            height: 30px;
+            padding: 2px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .property-row input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .property-row input[type="range"] {
+            flex: 1;
+        }
+
+        .full-width-btn {
+            width: 100%;
+            margin-top: 8px;
+            padding: 10px;
+        }
+
+        .danger {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .danger:hover {
+            background: #ff6b6b;
+        }
+
+        #no-selection {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        /* ===== Bottom Panel ===== */
+        #bottom-panel {
+            height: 150px;
+            background: var(--bg-panel);
+            border-top: 2px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        . panel-tabs {
+            display: flex;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .panel-tab {
+            padding: 8px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .panel-tab. active {
+            background: var(--bg-panel);
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .bottom-content {
+            display: none;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .bottom-content. active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #console-output {
+            flex: 1;
+            overflow-y: auto;
+            padding:  10px;
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            background: var(--bg-dark);
+        }
+
+        . console-line {
+            padding: 3px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .console-line. error {
+            color: var(--danger);
+        }
+
+        .console-line. warn {
+            color: var(--warning);
+        }
+
+        . console-line.success {
+            color: var(--success);
+        }
+
+        #console-input-row {
+            display: flex;
+            padding: 8px;
+            gap: 8px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-color);
+        }
+
+        #console-input {
+            flex: 1;
+            padding: 8px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color:  var(--text-primary);
+            border-radius: 4px;
+            font-family: 'Consolas', monospace;
+        }
+
+        #hierarchy-list {
+            flex: 1;
+            overflow-y: auto;
+            padding:  10px;
+        }
+
+        .hierarchy-item {
+            padding: 8px 12px;
+            margin-bottom:  4px;
+            background: var(--bg-dark);
+            border: 1px solid transparent;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .hierarchy-item:hover {
+            border-color: var(--border-color);
+        }
+
+        .hierarchy-item. selected {
+            border-color: var(--accent);
+            background:  var(--accent-secondary);
+        }
+
+        #settings-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .setting-item label {
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+
+        .setting-item input {
+            padding: 8px 10px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color:  var(--text-primary);
+            border-radius: 4px;
+        }
+
+        /* ===== Visual Script Nodes ===== */
+        . vs-node {
+            position: absolute;
+            min-width: 180px;
+            background: var(--bg-panel);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            cursor: move;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .vs-node. selected {
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.3);
+        }
+
+        .vs-node-header {
+            padding: 10px 12px;
+            border-radius: 6px 6px 0 0;
+            font-weight: bold;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .vs-node. event . vs-node-header { background: var(--node-event); color: #000; }
+        .vs-node.action .vs-node-header { background: var(--node-action); }
+        .vs-node.flow .vs-node-header { background: var(--node-flow); color: #000; }
+        . vs-node.math .vs-node-header { background: var(--node-math); }
+        .vs-node.comparison .vs-node-header { background: var(--node-comparison); color: #000; }
+        . vs-node.variable .vs-node-header { background: var(--node-variable); color: #000; }
+
+        .vs-node-content {
+            padding: 10px;
+        }
+
+        .vs-node-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 11px;
+        }
+
+        . vs-node-row: last-child {
+            margin-bottom: 0;
+        }
+
+        .vs-port {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--text-primary);
+            background: var(--bg-dark);
+            cursor: crosshair;
+            transition: all 0.2s;
+        }
+
+        .vs-port: hover {
+            transform: scale(1.3);
+            background: var(--accent);
+        }
+
+        .vs-port.exec {
+            border-radius: 3px;
+            transform: rotate(45deg);
+        }
+
+        .vs-port.exec:hover {
+            transform: rotate(45deg) scale(1.3);
+        }
+
+        .vs-port.connected {
+            background: var(--accent);
+        }
+
+        .vs-port-label {
+            font-size:  10px;
+            color:  var(--text-secondary);
+        }
+
+        .vs-node input {
+            width: 60px;
+            padding: 4px 6px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius:  3px;
+            font-size: 11px;
+        }
+
+        .vs-node select {
+            padding: 4px 6px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        /* ===== Scrollbar ===== */
+        : :-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background:  var(--bg-dark);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-lighter);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-secondary);
+        }
+
+        /* ===== Modal ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--bg-panel);
+            border: 2px solid var(--border-color);
+            border-radius:  12px;
+            padding: 25px;
+            min-width: 400px;
+            max-width:  90%;
+        }
+
+        .modal h2 {
+            margin-bottom: 20px;
+            color: var(--accent);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top:  20px;
+            justify-content: flex-end;
+        }
+
+        /* ===== Play Mode Overlay ===== */
+        #play-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left:  0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #play-overlay.active {
+            display: flex;
+        }
+
+        #play-canvas {
+            border: 3px solid var(--accent);
+            border-radius: 8px;
+        }
+
+        #play-controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+        }
+
+        /* ===== Context Menu ===== */
+        #context-menu {
+            display: none;
+            position: fixed;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 150px;
+            z-index: 1001;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+        }
+
+        #context-menu.active {
+            display: block;
+        }
+
+        . context-item {
+            padding:  10px 20px;
+            cursor: pointer;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        . context-item:hover {
+            background: var(--accent-secondary);
+        }
+
+        .context-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Top Toolbar -->
+        <div id="toolbar">
+            <div class="toolbar-section">
+                <span class="logo">🎮 GameForge 2D</span>
+            </div>
+            <div class="toolbar-section">
+                <button id="btn-new" title="New Project">📄 New</button>
+                <button id="btn-save" title="Save Project">💾 Save</button>
+                <button id="btn-load" title="Load Project">📂 Load</button>
+                <input type="file" id="file-input" accept=".json" style="display: none;">
+            </div>
+            <div class="toolbar-section">
+                <button id="btn-play" class="play-btn" title="Play Game">▶️ Play</button>
+                <button id="btn-stop" class="stop-btn" title="Stop Game" disabled>⏹️ Stop</button>
+            </div>
+            <div class="toolbar-section">
+                <button id="btn-grid" title="Toggle Grid">🔲 Grid</button>
+                <button id="btn-snap" class="active" title="Toggle Snap">🧲 Snap</button>
+            </div>
+            <div class="toolbar-section">
+                <button id="tab-scene" class="active">🎬 Scene</button>
+                <button id="tab-visual">🔗 Visual Script</button>
+            </div>
+            <div class="toolbar-section">
+                <span id="status-text" style="font-size: 12px; color: var(--text-secondary);">Ready</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="main-content">
+            <!-- Left Panel -->
+            <div id="left-panel">
+                <div class="panel-header">📦 Objects</div>
+                <div id="palette-tabs">
+                    <button class="palette-tab active" data-tab="objects">Objects</button>
+                    <button class="palette-tab" data-tab="prefabs">Prefabs</button>
+                </div>
+                <div id="palette-content"></div>
+            </div>
+
+            <!-- Center Panel -->
+            <div id="center-panel">
+                <!-- Scene View -->
+                <div id="scene-view" class="editor-view active">
+                    <div id="canvas-container">
+                        <canvas id="game-canvas"></canvas>
+                    </div>
+                    <div id="canvas-controls">
+                        <button id="btn-zoom-in">➕</button>
+                        <span id="zoom-level">100%</span>
+                        <button id="btn-zoom-out">➖</button>
+                        <button id="btn-zoom-reset">↺</button>
+                    </div>
+                </div>
+
+                <!-- Visual Script View -->
+                <div id="visual-script-view" class="editor-view">
+                    <div id="node-toolbar">
+                        <span>Add Node: </span>
+                        <select id="node-type-select">
+                            <optgroup label="Events">
+                                <option value="OnStart">On Start</option>
+                                <option value="OnUpdate">On Update</option>
+                                <option value="OnKeyPress">On Key Press</option>
+                                <option value="OnKeyRelease">On Key Release</option>
+                                <option value="OnCollision">On Collision</option>
+                                <option value="OnClick">On Mouse Click</option>
+                            </optgroup>
+                            <optgroup label="Actions">
+                                <option value="Move">Move</option>
+                                <option value="SetPosition">Set Position</option>
+                                <option value="SetVelocity">Set Velocity</option>
+                                <option value="ApplyForce">Apply Force</option>
+                                <option value="Rotate">Rotate</option>
+                                <option value="Destroy">Destroy</option>
+                                <option value="Spawn">Spawn Object</option>
+                                <option value="PlaySound">Play Sound</option>
+                                <option value="Log">Log Message</option>
+                            </optgroup>
+                            <optgroup label="Flow Control">
+                                <option value="Branch">Branch (If/Else)</option>
+                                <option value="Delay">Delay</option>
+                                <option value="Loop">Loop</option>
+                            </optgroup>
+                            <optgroup label="Math">
+                                <option value="Add">Add</option>
+                                <option value="Subtract">Subtract</option>
+                                <option value="Multiply">Multiply</option>
+                                <option value="Divide">Divide</option>
+                                <option value="Random">Random</option>
+                            </optgroup>
+                            <optgroup label="Comparison">
+                                <option value="Equals">Equals</option>
+                                <option value="Greater">Greater Than</option>
+                                <option value="Less">Less Than</option>
+                            </optgroup>
+                            <optgroup label="Variables">
+                                <option value="GetVariable">Get Variable</option>
+                                <option value="SetVariable">Set Variable</option>
+                                <option value="GetProperty">Get Property</option>
+                            </optgroup>
+                        </select>
+                        <button id="btn-add-node">➕ Add Node</button>
+                        <button id="btn-clear-nodes">🗑️ Clear All</button>
+                        <span style="margin-left: auto; font-size: 12px; color: var(--text-secondary);" id="current-object-script">No object selected</span>
+                    </div>
+                    <div id="node-editor-container">
+                        <svg id="connection-svg"></svg>
+                    </div>
+                    <div id="node-info">
+                        💡 Drag from ports to connect nodes • Right-click node to delete • Drag to move nodes
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div id="right-panel">
+                <div class="panel-header">🔧 Inspector</div>
+                <div id="inspector">
+                    <div id="no-selection">
+                        <p>👆 Select an object to edit its properties</p>
+                        <p style="margin-top: 15px; font-size: 11px;">Drag objects from the left panel onto the canvas to create them</p>
+                    </div>
+                    <div id="object-inspector" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Panel -->
+        <div id="bottom-panel">
+            <div class="panel-tabs">
+                <button class="panel-tab active" data-panel="console">📝 Console</button>
+                <button class="panel-tab" data-panel="hierarchy">📋 Hierarchy</button>
+                <button class="panel-tab" data-panel="settings">⚙️ Settings</button>
+            </div>
+            <div id="console-panel" class="bottom-content active">
+                <div id="console-output"></div>
+                <div id="console-input-row">
+                    <input type="text" id="console-input" placeholder="Enter command... ">
+                    <button id="btn-console-clear">Clear</button>
+                </div>
+            </div>
+            <div id="hierarchy-panel" class="bottom-content">
+                <div id="hierarchy-list"></div>
+            </div>
+            <div id="settings-panel" class="bottom-content">
+                <div id="settings-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Play Mode Overlay -->
+    <div id="play-overlay">
+        <canvas id="play-canvas"></canvas>
+        <div id="play-controls">
+            <button id="btn-stop-play">⏹️ Stop Game</button>
+            <button id="btn-restart-play">🔄 Restart</button>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div id="context-menu">
+        <div class="context-item" data-action="duplicate">📋 Duplicate</div>
+        <div class="context-item" data-action="delete">🗑️ Delete</div>
+        <div class="context-divider"></div>
+        <div class="context-item" data-action="bring-front">⬆️ Bring to Front</div>
+        <div class="context-item" data-action="send-back">⬇️ Send to Back</div>
+    </div>
+
+    <script>
+        // ==========================================
+        // GAME FORGE 2D ENGINE - COMPLETE SOURCE
+        // ==========================================
+
+        // ===== GLOBAL STATE =====
+        const Engine = {
+            canvas: null,
+            ctx: null,
+            width: 800,
+            height:  600,
+            backgroundColor: '#1a1a2e',
+            gridSize: 32,
+            showGrid: true,
+            snapToGrid: true,
+            zoom: 1,
+            panX: 0,
+            panY: 0,
+            isPlaying: false,
+            selectedObject: null,
+            objects: [],
+            prefabs: [],
+            variables: {},
+            gravity: { x: 0, y: 980 },
+            nextId: 1,
+            deltaTime: 0,
+            lastTime: 0,
+            keys: {},
+            mouse: { x: 0, y: 0, down: false }
+        };
+
+        // ===== OBJECT PALETTE DEFINITIONS =====
+        const PaletteObjects = [
+            { type: 'player', name: 'Player', icon: '🧑', color: '#4ecca3', width: 32, height: 48, physics: true, tag: 'player' },
+            { type: 'enemy', name: 'Enemy', icon: '👾', color: '#e94560', width: 32, height: 32, physics: true, tag: 'enemy' },
+            { type: 'platform', name: 'Platform', icon: '🟫', color: '#8b4513', width: 128, height: 32, physics:  true, isStatic: true, tag: 'platform' },
+            { type: 'ground', name: 'Ground', icon: '🟩', color: '#228b22', width: 800, height: 32, physics:  true, isStatic: true, tag: 'ground' },
+            { type: 'box', name: 'Box', icon: '📦', color: '#daa520', width: 32, height: 32, physics: true, tag: 'none' },
+            { type: 'spike', name: 'Spike', icon: '🔺', color: '#ff4444', width: 32, height:  32, physics: true, isStatic: true, tag: 'obstacle' },
+            { type: 'coin', name: 'Coin', icon: '🪙', color: '#ffd700', width: 24, height: 24, physics:  false, tag: 'collectible' },
+            { type:  'spring', name: 'Spring', icon: '🦘', color: '#ff69b4', width: 32, height: 16, physics: true, isStatic: true, tag: 'trigger' },
+            { type: 'checkpoint', name: 'Checkpoint', icon: '🚩', color: '#00ff00', width: 32, height: 64, physics: false, tag: 'trigger' },
+            { type: 'portal', name: 'Portal', icon: '🌀', color: '#9400d3', width: 48, height: 64, physics: false, tag: 'trigger' },
+            { type: 'text', name: 'Text', icon: '📝', color: '#ffffff', width: 100, height: 30, physics: false, text: 'Text', tag: 'none' },
+            { type: 'rect', name: 'Rectangle', icon: '⬜', color: '#6c5ce7', width: 64, height: 64, physics: false, tag: 'none' },
+            { type: 'circle', name: 'Circle', icon: '🔵', color: '#0984e3', width: 48, height: 48, isCircle: true, physics: false, tag: 'none' },
+            { type: 'trigger-zone', name: 'Trigger Zone', icon: '🔲', color: 'rgba(255,255,0,0.3)', width: 100, height: 100, physics:  false, tag: 'trigger' }
+        ];
+
+        // ===== GAME OBJECT CLASS =====
+        class GameObject {
+            constructor(config = {}) {
+                this.id = Engine.nextId++;
+                this. name = config.name || `Object_${this.id}`;
+                this.type = config.type || 'rect';
+                this.x = config.x || 100;
+                this.y = config.y || 100;
+                this.width = config.width || 64;
+                this.height = config.height || 64;
+                this.rotation = config.rotation || 0;
+                this.color = config.color || '#6c5ce7';
+                this.opacity = config.opacity !== undefined ? config.opacity : 1;
+                this.visible = config.visible !== undefined ? config.visible : true;
+                this.layer = config.layer || 0;
+                this.tag = config.tag || 'none';
+                this.icon = config.icon || '⬜';
+                this. text = config.text || '';
+                this.isCircle = config.isCircle || false;
+
+                // Physics properties
+                this.physics = config.physics || false;
+                this.isStatic = config.isStatic || false;
+                this.mass = config.mass || 1;
+                this.friction = config.friction || 0.1;
+                this.bounce = config.bounce || 0.2;
+                this.gravityScale = config.gravityScale || 1;
+
+                // Runtime physics state
+                this.vx = 0;
+                this.vy = 0;
+                this.ax = 0;
+                this.ay = 0;
+                this.grounded = false;
+
+                // Visual scripting
+                this.nodes = [];
+                this.connections = [];
+                this.variables = {};
+
+                // State for play mode
+                this.initialState = null;
+            }
+
+            saveState() {
+                this.initialState = {
+                    x: this.x, y: this.y,
+                    vx: this.vx, vy: this.vy,
+                    rotation: this.rotation,
+                    visible: this.visible
+                };
+            }
+
+            restoreState() {
+                if (this.initialState) {
+                    Object.assign(this, this.initialState);
+                    this.vx = 0;
+                    this. vy = 0;
+                    this.ax = 0;
+                    this.ay = 0;
+                }
+            }
+
+            getBounds() {
+                return {
+                    left: this.x,
+                    right: this.x + this. width,
+                    top: this.y,
+                    bottom: this.y + this.height,
+                    centerX: this.x + this. width / 2,
+                    centerY: this.y + this.height / 2
+                };
+            }
+
+            containsPoint(px, py) {
+                if (this.isCircle) {
+                    const cx = this.x + this.width / 2;
+                    const cy = this.y + this. height / 2;
+                    const r = this.width / 2;
+                    return Math.sqrt((px - cx) ** 2 + (py - cy) ** 2) <= r;
+                }
+                return px >= this.x && px <= this.x + this.width &&
+                       py >= this.y && py <= this.y + this. height;
+            }
+
+            collidesWith(other) {
+                const a = this.getBounds();
+                const b = other.getBounds();
+                return a.left < b.right && a.right > b.left &&
+                       a.top < b.bottom && a.bottom > b.top;
+            }
+
+            render(ctx) {
+                if (! this.visible) return;
+
+                ctx.save();
+                ctx. globalAlpha = this.opacity;
+
+                const cx = this.x + this.width / 2;
+                const cy = this.y + this.height / 2;
+
+                if (this.rotation !== 0) {
+                    ctx.translate(cx, cy);
+                    ctx.rotate(this.rotation * Math.PI / 180);
+                    ctx.translate(-cx, -cy);
+                }
+
+                if (this.type === 'text') {
+                    ctx.fillStyle = this.color;
+                    ctx.font = `${this.height}px Arial`;
+                    ctx.textBaseline = 'top';
+                    ctx.fillText(this.text || 'Text', this.x, this.y);
+                } else if (this. isCircle) {
+                    ctx.beginPath();
+                    ctx.arc(cx, cy, this.width / 2, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = this.color;
+                    ctx.fillRect(this. x, this.y, this. width, this.height);
+                }
+
+                // Draw icon
+                if (this.icon && this.type !== 'text') {
+                    ctx.font = `${Math.min(this.width, this.height) * 0.6}px Arial`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(this.icon, cx, cy);
+                }
+
+                ctx.restore();
+            }
+
+            toJSON() {
+                return {
+                    id: this.id,
+                    name: this.name,
+                    type: this. type,
+                    x: this.x,
+                    y: this.y,
+                    width: this.width,
+                    height: this.height,
+                    rotation: this.rotation,
+                    color: this.color,
+                    opacity: this.opacity,
+                    visible: this. visible,
+                    layer: this.layer,
+                    tag: this.tag,
+                    icon: this.icon,
+                    text: this.text,
+                    isCircle: this.isCircle,
+                    physics: this.physics,
+                    isStatic: this.isStatic,
+                    mass: this.mass,
+                    friction: this. friction,
+                    bounce: this.bounce,
+                    gravityScale: this.gravityScale,
+                    nodes: this.nodes,
+                    connections: this.connections,
+                    variables: this.variables
+                };
+            }
+
+            static fromJSON(json) {
+                const obj = new GameObject(json);
+                obj.id = json.id;
+                obj.nodes = json.nodes || [];
+                obj.connections = json.connections || [];
+                obj.variables = json.variables || {};
+                return obj;
+            }
+        }
+
+        // ===== VISUAL SCRIPT NODE DEFINITIONS =====
+        const NodeDefinitions = {
+            // Events
+            OnStart: { category: 'event', color: '#4ecca3', outputs: [{ name: 'exec', type: 'exec' }] },
+            OnUpdate:  { category: 'event', color: '#4ecca3', outputs: [{ name: 'exec', type: 'exec' }, { name: 'deltaTime', type: 'number' }] },
+            OnKeyPress: { category: 'event', color: '#4ecca3', inputs: [{ name: 'key', type: 'key', default: 'Space' }], outputs: [{ name: 'exec', type: 'exec' }] },
+            OnKeyRelease: { category: 'event', color: '#4ecca3', inputs: [{ name: 'key', type: 'key', default: 'Space' }], outputs: [{ name: 'exec', type: 'exec' }] },
+            OnCollision: { category: 'event', color: '#4ecca3', inputs: [{ name: 'tag', type: 'tag', default: 'any' }], outputs: [{ name: 'exec', type: 'exec' }, { name: 'other', type: 'object' }] },
+            OnClick: { category: 'event', color: '#4ecca3', outputs: [{ name: 'exec', type: 'exec' }] },
+
+            // Actions
+            Move: { category: 'action', color: '#e94560', inputs: [{ name: 'exec', type: 'exec' }, { name: 'x', type: 'number', default: 0 }, { name: 'y', type: 'number', default: 0 }], outputs: [{ name:  'exec', type: 'exec' }] },
+            SetPosition: { category: 'action', color: '#e94560', inputs: [{ name: 'exec', type: 'exec' }, { name: 'x', type: 'number', default: 0 }, { name: 'y', type: 'number', default: 0 }], outputs: [{ name: 'exec', type: 'exec' }] },
+            SetVelocity: { category: 'action', color: '#e94560', inputs: [{ name:  'exec', type: 'exec' }, { name: 'vx', type: 'number', default: 0 }, { name: 'vy', type: 'number', default: 0 }], outputs: [{ name: 'exec', type:  'exec' }] },
+            ApplyForce: { category: 'action', color: '#e94560', inputs: [{ name:  'exec', type: 'exec' }, { name: 'fx', type: 'number', default: 0 }, { name:  'fy', type: 'number', default: -500 }], outputs: [{ name: 'exec', type: 'exec' }] },
+            Rotate: { category: 'action', color: '#e94560', inputs: [{ name: 'exec', type: 'exec' }, { name: 'angle', type: 'number', default: 5 }], outputs: [{ name: 'exec', type: 'exec' }] },
+            Destroy: { category: 'action', color: '#e94560', inputs: [{ name: 'exec', type: 'exec' }], outputs: [] },
+            Spawn: { category: 'action', color: '#e94560', inputs: [{ name:  'exec', type: 'exec' }, { name: 'prefab', type: 'string', default: '' }, { name: 'x', type: 'number', default: 0 }, { name:  'y', type: 'number', default: 0 }], outputs: [{ name: 'exec', type: 'exec' }, { name: 'spawned', type: 'object' }] },
+            PlaySound: { category: 'action', color: '#e94560', inputs: [{ name: 'exec', type: 'exec' }, { name: 'sound', type: 'string', default:  'beep' }], outputs: [{ name:  'exec', type: 'exec' }] },
+            Log: { category: 'action', color: '#e94560', inputs: [{ name: 'exec', type: 'exec' }, { name: 'message', type: 'string', default: 'Hello!' }], outputs: [{ name:  'exec', type: 'exec' }] },
+
+            // Flow Control
+            Branch: { category: 'flow', color: '#ffc107', inputs: [{ name:  'exec', type: 'exec' }, { name: 'condition', type: 'boolean' }], outputs: [{ name:  'true', type: 'exec' }, { name: 'false', type: 'exec' }] },
+            Delay: { category: 'flow', color: '#ffc107', inputs: [{ name: 'exec', type: 'exec' }, { name: 'seconds', type: 'number', default: 1 }], outputs:  [{ name: 'exec', type: 'exec' }] },
+            Loop: { category: 'flow', color: '#ffc107', inputs: [{ name: 'exec', type: 'exec' }, { name: 'count', type: 'number', default: 5 }], outputs: [{ name: 'loop', type: 'exec' }, { name: 'done', type: 'exec' }, { name: 'index', type: 'number' }] },
+
+            // Math
+            Add: { category: 'math', color: '#7b68ee', inputs: [{ name:  'a', type: 'number', default: 0 }, { name: 'b', type: 'number', default: 0 }], outputs: [{ name:  'result', type: 'number' }] },
+            Subtract: { category: 'math', color:  '#7b68ee', inputs:  [{ name: 'a', type: 'number', default:  0 }, { name: 'b', type: 'number', default: 0 }], outputs: [{ name: 'result', type: 'number' }] },
+            Multiply:  { category: 'math', color: '#7b68ee', inputs: [{ name: 'a', type: 'number', default: 0 }, { name:  'b', type: 'number', default: 0 }], outputs: [{ name: 'result', type: 'number' }] },
+            Divide: { category: 'math', color: '#7b68ee', inputs: [{ name: 'a', type: 'number', default: 0 }, { name: 'b', type: 'number', default: 1 }], outputs: [{ name: 'result', type: 'number' }] },
+            Random: { category: 'math', color: '#7b68ee', inputs: [{ name: 'min', type: 'number', default: 0 }, { name: 'max', type: 'number', default: 100 }], outputs: [{ name:  'result', type: 'number' }] },
+
+            // Comparison
+            Equals: { category: 'comparison', color: '#ff9800', inputs: [{ name:  'a', type: 'any', default: 0 }, { name: 'b', type: 'any', default: 0 }], outputs: [{ name:  'result', type: 'boolean' }] },
+            Greater: { category: 'comparison', color: '#ff9800', inputs: [{ name: 'a', type: 'number', default: 0 }, { name: 'b', type:  'number', default: 0 }], outputs: [{ name: 'result', type: 'boolean' }] },
+            Less: { category: 'comparison', color: '#ff9800', inputs: [{ name: 'a', type: 'number', default: 0 }, { name: 'b', type: 'number', default: 0 }], outputs: [{ name:  'result', type: 'boolean' }] },
+
+            // Variables
+            GetVariable: { category: 'variable', color: '#00bcd4', inputs: [{ name: 'name', type: 'string', default: 'myVar' }], outputs: [{ name: 'value', type:  'any' }] },
+            SetVariable: { category: 'variable', color: '#00bcd4', inputs: [{ name: 'exec', type: 'exec' }, { name: 'name', type: 'string', default: 'myVar' }, { name: 'value', type: 'any', default: 0 }], outputs: [{ name: 'exec', type: 'exec' }] },
+            GetProperty: { category: 'variable', color: '#00bcd4', inputs: [{ name: 'property', type: 'property', default: 'x' }], outputs: [{ name: 'value', type: 'number' }] }
+        };
+
+        // ===== VISUAL SCRIPT NODE CLASS =====
+        class VSNode {
+            constructor(type, x = 100, y = 100) {
+                this.id = `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                this.type = type;
+                this.x = x;
+                this.y = y;
+                this.definition = NodeDefinitions[type];
+                this.inputValues = {};
+                this.outputValues = {};
+
+                // Initialize default values
+                if (this.definition?. inputs) {
+                    this. definition.inputs.forEach(input => {
+                        if (input.default !== undefined) {
+                            this.inputValues[input. name] = input.default;
+                        }
+                    });
+                }
+            }
+
+            toJSON() {
+                return {
+                    id: this.id,
+                    type: this.type,
+                    x: this. x,
+                    y: this.y,
+                    inputValues: { ...this.inputValues }
+                };
+            }
+
+            static fromJSON(json) {
+                const node = new VSNode(json.type, json.x, json.y);
+                node.id = json.id;
+                node.inputValues = json.inputValues || {};
+                return node;
+            }
+        }
+
+        // ===== VISUAL SCRIPT CONNECTION CLASS =====
+        class VSConnection {
+            constructor(fromNode, fromPort, toNode, toPort) {
+                this.id = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                this.fromNode = fromNode;
+                this.fromPort = fromPort;
+                this.toNode = toNode;
+                this.toPort = toPort;
+            }
+
+            toJSON() {
+                return {
+                    id:  this.id,
+                    fromNode: this.fromNode,
+                    fromPort: this.fromPort,
+                    toNode:  this.toNode,
+                    toPort: this.toPort
+                };
+            }
+
+            static fromJSON(json) {
+                const conn = new VSConnection(json.fromNode, json.fromPort, json.toNode, json. toPort);
+                conn.id = json.id;
+                return conn;
+            }
+        }
+
+        // ===== VISUAL SCRIPT EXECUTOR =====
+        class ScriptExecutor {
+            constructor(gameObject) {
+                this.gameObject = gameObject;
+                this.nodes = new Map();
+                this.connections = [];
+                this.delayedExecutions = [];
+
+                // Build node map
+                gameObject.nodes.forEach(nodeData => {
+                    const node = VSNode.fromJSON(nodeData);
+                    this. nodes.set(node.id, node);
+                });
+
+                // Build connections
+                gameObject.connections.forEach(connData => {
+                    this.connections.push(VSConnection. fromJSON(connData));
+                });
+            }
+
+            getInputValue(node, portName) {
+                // Check for connected value first
+                const conn = this.connections.find(c => c.toNode === node. id && c.toPort === portName);
+                if (conn) {
+                    const fromNode = this.nodes.get(conn.fromNode);
+                    if (fromNode) {
+                        return this.evaluateNode(fromNode, conn. fromPort);
+                    }
+                }
+                // Return local value
+                return node.inputValues[portName];
+            }
+
+            evaluateNode(node, outputPort = null) {
+                const def = node.definition;
+                if (! def) return null;
+
+                switch (node.type) {
+                    case 'Add':
+                        return this.getInputValue(node, 'a') + this.getInputValue(node, 'b');
+                    case 'Subtract': 
+                        return this.getInputValue(node, 'a') - this.getInputValue(node, 'b');
+                    case 'Multiply':
+                        return this.getInputValue(node, 'a') * this.getInputValue(node, 'b');
+                    case 'Divide':
+                        const divisor = this.getInputValue(node, 'b');
+                        return divisor !== 0 ? this.getInputValue(node, 'a') / divisor : 0;
+                    case 'Random': 
+                        const min = this.getInputValue(node, 'min');
+                        const max = this.getInputValue(node, 'max');
+                        return Math.random() * (max - min) + min;
+                    case 'Equals':
+                        return this.getInputValue(node, 'a') === this.getInputValue(node, 'b');
+                    case 'Greater': 
+                        return this.getInputValue(node, 'a') > this.getInputValue(node, 'b');
+                    case 'Less':
+                        return this.getInputValue(node, 'a') < this.getInputValue(node, 'b');
+                    case 'GetVariable':
+                        const varName = this.getInputValue(node, 'name');
+                        return this.gameObject.variables[varName] ??  Engine.variables[varName] ?? 0;
+                    case 'GetProperty':
+                        const prop = this.getInputValue(node, 'property');
+                        return this.gameObject[prop] ?? 0;
+                    case 'OnUpdate':
+                        if (outputPort === 'deltaTime') return Engine.deltaTime;
+                        return null;
+                    default:
+                        return node.outputValues[outputPort];
+                }
+            }
+
+            executeNode(node, context = {}) {
+                if (! node || !node.definition) return;
+
+                const def = node.definition;
+
+                switch (node.type) {
+                    case 'Move':
+                        const mx = this.getInputValue(node, 'x');
+                        const my = this.getInputValue(node, 'y');
+                        this.gameObject.x += mx * Engine.deltaTime;
+                        this.gameObject.y += my * Engine.deltaTime;
+                        this.continueExec(node, 'exec');
+                        break;
+
+                    case 'SetPosition': 
+                        this.gameObject.x = this. getInputValue(node, 'x');
+                        this.gameObject.y = this.getInputValue(node, 'y');
+                        this.continueExec(node, 'exec');
+                        break;
+
+                    case 'SetVelocity':
+                        this.gameObject.vx = this.getInputValue(node, 'vx');
+                        this.gameObject.vy = this.getInputValue(node, 'vy');
+                        this.continueExec(node, 'exec');
+                        break;
+
+                    case 'ApplyForce':
+                        if (! this.gameObject.isStatic) {
+                            this. gameObject.vx += this.getInputValue(node, 'fx') / this.gameObject.mass;
+                            this.gameObject.vy += this.getInputValue(node, 'fy') / this.gameObject.mass;
+                        }
+                        this.continueExec(node, 'exec');
+                        break;
+
+                    case 'Rotate': 
+                        this.gameObject.rotation += this.getInputValue(node, 'angle');
+                        this.continueExec(node, 'exec');
+                        break;
+
+                    case 'Destroy':
+                        this.gameObject.visible = false;
+                        this. gameObject._destroyed = true;
+                        break;
+
+                    case 'Log':
+                        ConsoleLog(this.getInputValue(node, 'message'), 'log');
+                        this.continueExec(node, 'exec');
+                        break;
+
+                    case 'SetVariable':
+                        const setVarName = this.getInputValue(node, 'name');
+                        const setVarValue = this.getInputValue(node, 'value');
+                        this.gameObject. variables[setVarName] = setVarValue;
+                        this.continueExec(node, 'exec');
+                        break;
+
+                    case 'Branch':
+                        const condition = this.getInputValue(node, 'condition');
+                        if (condition) {
+                            this. continueExec(node, 'true');
+                        } else {
+                            this.continueExec(node, 'false');
+                        }
+                        break;
+
+                    case 'Delay':
+                        const delay = this.getInputValue(node, 'seconds') * 1000;
+                        setTimeout(() => {
+                            if (Engine.isPlaying) {
+                                this. continueExec(node, 'exec');
+                            }
+                        }, delay);
+                        break;
+
+                    case 'Loop':
+                        const count = this.getInputValue(node, 'count');
+                        for (let i = 0; i < count; i++) {
+                            node.outputValues['index'] = i;
+                            this.continueExec(node, 'loop');
+                        }
+                        this.continueExec(node, 'done');
+                        break;
+
+                    case 'PlaySound':
+                        // Simple beep sound using Web Audio API
+                        try {
+                            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                            const oscillator = audioCtx.createOscillator();
+                            const gainNode = audioCtx.createGain();
+                            oscillator.connect(gainNode);
+                            gainNode.connect(audioCtx.destination);
+                            oscillator.frequency.value = 440;
+                            oscillator.type = 'sine';
+                            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                            gainNode.gain. exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                            oscillator.start(audioCtx.currentTime);
+                            oscillator.stop(audioCtx. currentTime + 0.2);
+                        } catch (e) {}
+                        this.continueExec(node, 'exec');
+                        break;
+
+                    case 'Spawn':
+                        const prefabName = this.getInputValue(node, 'prefab');
+                        const spawnX = this.getInputValue(node, 'x');
+                        const spawnY = this.getInputValue(node, 'y');
+                        const prefab = Engine.prefabs.find(p => p.name === prefabName);
+                        if (prefab) {
+                            const spawned = new GameObject({ ... prefab, x: spawnX, y: spawnY });
+                            Engine.objects.push(spawned);
+                            spawned.saveState();
+                            node.outputValues['spawned'] = spawned;
+                        }
+                        this.continueExec(node, 'exec');
+                        break;
+                }
+            }
+
+            continueExec(fromNode, fromPort) {
+                const conns = this.connections.filter(c => c.fromNode === fromNode. id && c.fromPort === fromPort);
+                conns.forEach(conn => {
+                    const nextNode = this.nodes.get(conn.toNode);
+                    if (nextNode) {
+                        this.executeNode(nextNode);
+                    }
+                });
+            }
+
+            triggerEvent(eventType, context = {}) {
+                this.nodes.forEach(node => {
+                    if (node.type === eventType) {
+                        // Check conditions
+                        if (eventType === 'OnKeyPress' || eventType === 'OnKeyRelease') {
+                            const key = node.inputValues['key'];
+                            if (context.key !== key && key !== 'Any') return;
+                        }
+                        if (eventType === 'OnCollision') {
+                            const tag = node.inputValues['tag'];
+                            if (tag !== 'any' && context.other?. tag !== tag) return;
+                            node.outputValues['other'] = context.other;
+                        }
+
+                        // Execute connected nodes
+                        this.continueExec(node, 'exec');
+                    }
+                });
+            }
+        }
+
+        // ===== PHYSICS ENGINE =====
+        const Physics = {
+            update(dt) {
+                const objects = Engine.objects. 
